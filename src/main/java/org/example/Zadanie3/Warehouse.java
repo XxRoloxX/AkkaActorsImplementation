@@ -7,6 +7,11 @@ import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
 import org.example.Utils;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Set;
+import java.util.TreeSet;
+
 public class Warehouse extends AbstractBehavior<Production.Commands> {
     private double amountOfGrapes;
     private double amountOfWater;
@@ -14,6 +19,8 @@ public class Warehouse extends AbstractBehavior<Production.Commands> {
     private int amountOfBottles;
 
     //public interface WarehouseCommands extends Production.Commands {};
+
+    private HashMap<ActorRef<Production.Commands>,ResourcesTransferRequest> reservedResources;
 
     private Warehouse(ActorContext<Production.Commands> context) {
         super(context);
@@ -25,6 +32,7 @@ public class Warehouse extends AbstractBehavior<Production.Commands> {
         this.amountOfWater = amountOfWater;
         this.amountOfSugar = amountOfSugar;
         this.amountOfBottles = amountOfBottles;
+        reservedResources = new HashMap<>();
 
     }
 
@@ -36,14 +44,12 @@ public class Warehouse extends AbstractBehavior<Production.Commands> {
     @Override
     public Receive<Production.Commands> createReceive() {
         return newReceiveBuilder()
-                .onMessageEquals(ReportState.INSTANCE, this::onReportState)
+                .onMessageEquals(Production.ReportState.INSTANCE, this::onReportState)
                 .onMessage(ResourceTransferAcknowledgement.class,this::onResourceTransferAcknowledgement)
                 .onMessage(ResourcesTransferRequest.class,this::onResourceTransferRequest)
                 .build();
     }
-    public enum ReportState implements Production.Commands {
-        INSTANCE
-    }
+
 
     private Behavior<Production.Commands>onReportState(){
         System.out.println("Resources: ");
@@ -60,8 +66,25 @@ public class Warehouse extends AbstractBehavior<Production.Commands> {
         amountOfWater -= Math.min(commands.water, amountOfWater);
         amountOfSugar -=Math.min(commands.sugar, amountOfSugar);
         amountOfBottles -= Math.min(commands.bottles, amountOfBottles);
-        onReportState();
+        getContext().getLog().info("Received Resource Transfer Acknowledgement: {}", commands);
+        //onReportState();
         return this;
+    }
+
+    private ResourcesTransferRequest getAllReservedResources(){
+        //ResourcesTransferRequest result = new ResourcesTransferRequest(getContext().getSelf(),0,0,0,0);
+        ResourcesTransferRequest element;
+        double grapes=0;
+        double sugar=0;
+        double water=0;
+        double bottles=0;
+
+        Set<ActorRef<Production.Commands>> keys= reservedResources.keySet();
+        for(ActorRef<Production.Commands> key: keys){
+            element = reservedResources.get(key);
+            result.grapes += element.grapes;;
+
+        }
     }
 
 
@@ -73,6 +96,15 @@ public class Warehouse extends AbstractBehavior<Production.Commands> {
                 Math.min(commands.water, amountOfWater),
                 Math.min(commands.sugar, amountOfSugar),
                 Math.min(commands.bottles, amountOfBottles)));
+
+        reservedResources.put(commands.from,(new ResourcesTransferResponse(getContext().getSelf(),
+                Math.min(commands.grapes, amountOfGrapes),
+                Math.min(commands.water, amountOfWater),
+                Math.min(commands.sugar, amountOfSugar),
+                Math.min(commands.bottles, amountOfBottles))));
+
+        getContext().getLog().info("Received Resource Transfer Request: {}", commands);
+
         //onReportState();
 
 
@@ -99,7 +131,16 @@ public class Warehouse extends AbstractBehavior<Production.Commands> {
             this.from = from;
         }
 
-
+        @Override
+        public String toString() {
+            return "ResourcesTransferRequest{" +
+                    "grapes=" + grapes +
+                    ", water=" + water +
+                    ", sugar=" + sugar +
+                    ", bottles=" + bottles +
+                    ", from=" + from +
+                    '}';
+        }
     }
     public static class ResourcesTransferResponse extends ResourcesTransferRequest {
 

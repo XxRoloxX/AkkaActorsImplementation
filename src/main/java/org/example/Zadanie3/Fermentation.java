@@ -1,4 +1,5 @@
 package org.example.Zadanie3;
+import akka.actor.Actor;
 import akka.actor.typed.ActorRef;
 import akka.actor.typed.Behavior;
 import akka.actor.typed.javadsl.AbstractBehavior;
@@ -7,6 +8,7 @@ import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
 import org.example.Utils;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.Random;
 
@@ -17,7 +19,6 @@ public class Fermentation extends AbstractBehavior<Production.Commands> {
     private static final double REQUIRED_WATER=8;
 
     private static final double REQUIRED_SUGAR=2;
-
 
     private static final double UNFILTERED_WINE_OUTPUT=25;
 
@@ -32,9 +33,8 @@ public class Fermentation extends AbstractBehavior<Production.Commands> {
 
     private double amountOfUnfilteredWine;
 
-    private ActorRef<Production.Commands> warehouse;
-
-    private ActorRef<Production.Commands> winePress;
+    private ArrayList<ActorRef<Production.Commands>> warehouses;
+    private ArrayList<ActorRef<Production.Commands>>winePresses;
 
 
     private boolean occupied;
@@ -47,6 +47,7 @@ public class Fermentation extends AbstractBehavior<Production.Commands> {
         amountOfWater = 0;
         occupied=false;
         this.timeModifier=timeModifier;
+
     }
 
 
@@ -56,9 +57,7 @@ public class Fermentation extends AbstractBehavior<Production.Commands> {
 
     //public interface FermentationCommands {};
 
-    public enum ReportState implements Production.Commands {
-        INSTANCE;
-    }
+
 
 
     public static Behavior<Production.Commands> create(double timeModifierArg){
@@ -68,24 +67,38 @@ public class Fermentation extends AbstractBehavior<Production.Commands> {
     @Override
     public Receive<Production.Commands> createReceive() {
         return newReceiveBuilder()
-                .onMessageEquals(ReportState.INSTANCE,this::onReportState)
+                .onMessageEquals(Production.ReportState.INSTANCE,this::onReportState)
                 .onMessageEquals(Production.triggerProduction.INSTANCE,this::onTriggerProduction)
                 .onMessage(WinePress.GrapeJuiceTransferResponse.class,this::onGrapeJuiceTransportResponse)
                 .onMessage(Production.InitializeProduction.class,this::onInitializeProduction)
+                .onMessage(UnfilteredWineTransferAcknowledgement.class,this::onUnfilteredWineTransferAcknowledgement)
+                .onMessage(UnfilteredWineTransferRequest.class,this::onUnfilteredWineTransferRequest)
                 .onMessage(Warehouse.ResourcesTransferResponse.class,this::onWarehouseTransportResponse)
                 .build();
     }
 
     private Behavior<Production.Commands> onTriggerProduction(){
 
-        winePress.tell(Production.triggerProduction.INSTANCE);
-        warehouse.tell(Production.triggerProduction.INSTANCE);
+
+        for(ActorRef<Production.Commands> warehouse: warehouses){
+            warehouse.tell(Production.triggerProduction.INSTANCE);
+        }
+        for(ActorRef<Production.Commands> winePress: winePresses){
+            winePress.tell(Production.triggerProduction.INSTANCE);
+        }
         onReportState();
 
             if(!produce()){
-                warehouse.tell(new Warehouse.ResourcesTransferRequest(getContext().getSelf(), 0,
-                        Math.max(REQUIRED_WATER-amountOfWater,0),Math.max(REQUIRED_SUGAR-amountOfSugar,0),0));
-                winePress.tell(new WinePress.GrapeJuiceTransferRequest(getContext().getSelf(),Math.max(REQUIRED_GRAPE_JUICE-amountOfGrapeJuice,0)));
+
+                for(ActorRef<Production.Commands> warehouse: warehouses){
+                    warehouse.tell(new Warehouse.ResourcesTransferRequest(getContext().getSelf(), 0,
+                            Math.max(REQUIRED_WATER-amountOfWater,0),Math.max(REQUIRED_SUGAR-amountOfSugar,0),0));
+                }
+
+                for(ActorRef<Production.Commands>winePress: winePresses){
+                    winePress.tell(new WinePress.GrapeJuiceTransferRequest(getContext().getSelf(),Math.max(REQUIRED_GRAPE_JUICE-amountOfGrapeJuice,0)));
+                }
+
             }
             return this;
 
@@ -98,7 +111,7 @@ public class Fermentation extends AbstractBehavior<Production.Commands> {
 
             Utils.waitFor((int)(TIME_TO_PRODUCE*1000*timeModifier));
 
-            occupied=false;
+
             amountOfWater-=REQUIRED_WATER;
             amountOfSugar-=REQUIRED_SUGAR;
             amountOfGrapeJuice-=REQUIRED_GRAPE_JUICE;
@@ -108,7 +121,7 @@ public class Fermentation extends AbstractBehavior<Production.Commands> {
             if(rand.nextDouble()>FAILURE_PROPABILITY){
                 amountOfUnfilteredWine+=UNFILTERED_WINE_OUTPUT;
             }
-            //onReportState();
+            onReportState();
             occupied=false;
 
             return true;
@@ -119,8 +132,8 @@ public class Fermentation extends AbstractBehavior<Production.Commands> {
     }
 
     private Behavior<Production.Commands>onInitializeProduction(Production.InitializeProduction commands){
-        this.warehouse=commands.warehouse;
-        this.winePress=commands.winePress;
+        warehouses= commands.warehouses;
+        winePresses= commands.winePresses;
         return this;
     }
 
@@ -135,6 +148,38 @@ public class Fermentation extends AbstractBehavior<Production.Commands> {
 
     }
 
+    public Behavior<Production.Commands> onUnfilteredWineTransferRequest(UnfilteredWineTransferRequest commands ){
+        commands.from.tell(new UnfilteredWineTransferResponse(getContext().getSelf(), Math.min(amountOfUnfilteredWine, commands.unfilteredWine)));
+        getContext().getLog().info("Received Unfiltered Wine Transfer Request: {}", commands);
+        return this;
+    }
+    public Behavior<Production.Commands> onUnfilteredWineTransferAcknowledgement(UnfilteredWineTransferAcknowledgement commands ){
+        amountOfUnfilteredWine -= commands.unfilteredWine;
+        getContext().getLog().info("Received Unfiltered Wine Transfer Acknowledgmenet: {}", commands);
+        return this;
+    }
+
+
+    public static class UnfilteredWineTransferRequest implements Production.Commands {
+        public final double unfilteredWine;
+        public final ActorRef<Production.Commands> from;
+
+        public UnfilteredWineTransferRequest(ActorRef<Production.Commands> from, double unfilteredWine){
+            this.from=from;
+            this.unfilteredWine=unfilteredWine;
+        }
+
+    }
+    public static class UnfilteredWineTransferResponse extends UnfilteredWineTransferRequest{
+        public UnfilteredWineTransferResponse(ActorRef<Production.Commands> from, double unfilteredWine){
+            super(from,unfilteredWine);
+        }
+    }
+    public static class UnfilteredWineTransferAcknowledgement extends UnfilteredWineTransferRequest{
+        public UnfilteredWineTransferAcknowledgement(ActorRef<Production.Commands> from, double unfilteredWine){
+            super(from,unfilteredWine);
+        }
+    }
 
 
     private Behavior<Production.Commands> onGrapeJuiceTransportResponse(WinePress.GrapeJuiceTransferResponse commands){
