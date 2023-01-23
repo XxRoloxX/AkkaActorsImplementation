@@ -8,9 +8,7 @@ import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
 import org.example.Utils;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.Random;
+import java.util.*;
 
 public class Fermentation extends AbstractBehavior<Production.Commands> {
 
@@ -36,6 +34,8 @@ public class Fermentation extends AbstractBehavior<Production.Commands> {
     private ArrayList<ActorRef<Production.Commands>> warehouses;
     private ArrayList<ActorRef<Production.Commands>>winePresses;
 
+    private HashMap<ActorRef<Production.Commands>,UnfilteredWineTransferResponse> reservedResources;
+
 
     private boolean occupied;
 
@@ -47,6 +47,7 @@ public class Fermentation extends AbstractBehavior<Production.Commands> {
         amountOfWater = 0;
         occupied=false;
         this.timeModifier=timeModifier;
+        reservedResources = new HashMap<>();
 
     }
 
@@ -86,7 +87,7 @@ public class Fermentation extends AbstractBehavior<Production.Commands> {
         for(ActorRef<Production.Commands> winePress: winePresses){
             winePress.tell(Production.triggerProduction.INSTANCE);
         }
-        onReportState();
+       // onReportState();
 
             if(!produce()){
 
@@ -121,7 +122,7 @@ public class Fermentation extends AbstractBehavior<Production.Commands> {
             if(rand.nextDouble()>FAILURE_PROPABILITY){
                 amountOfUnfilteredWine+=UNFILTERED_WINE_OUTPUT;
             }
-            onReportState();
+            //onReportState();
             occupied=false;
 
             return true;
@@ -138,7 +139,7 @@ public class Fermentation extends AbstractBehavior<Production.Commands> {
     }
 
     private Behavior<Production.Commands>onReportState(){
-        System.out.println("Resources: ");
+        System.out.println("Fermentation Station Resources: ");
         System.out.println("Sugar: "+amountOfSugar);
         System.out.println("Water: "+amountOfWater);
         System.out.println("Grape Juice: "+amountOfGrapeJuice);
@@ -147,15 +148,36 @@ public class Fermentation extends AbstractBehavior<Production.Commands> {
         return this;
 
     }
+    private UnfilteredWineTransferResponse getAllReservedResources(){
+        //ResourcesTransferRequest result = new ResourcesTransferRequest(getContext().getSelf(),0,0,0,0);
+        UnfilteredWineTransferResponse element;
+        double unfilteredWine =0;
+
+        Set<ActorRef<Production.Commands>> keys= reservedResources.keySet();
+        for(ActorRef<Production.Commands> key: keys){
+            element = reservedResources.get(key);
+            unfilteredWine += element.unfilteredWine;
+        }
+
+        return new UnfilteredWineTransferResponse(getContext().getSelf(),unfilteredWine);
+    }
 
     public Behavior<Production.Commands> onUnfilteredWineTransferRequest(UnfilteredWineTransferRequest commands ){
-        commands.from.tell(new UnfilteredWineTransferResponse(getContext().getSelf(), Math.min(amountOfUnfilteredWine, commands.unfilteredWine)));
-        getContext().getLog().info("Received Unfiltered Wine Transfer Request: {}", commands);
+        reservedResources.put(commands.from, new UnfilteredWineTransferResponse(commands.from,0));
+
+        UnfilteredWineTransferResponse loanedResources = new UnfilteredWineTransferResponse(
+                getContext().getSelf(), Math.min(Math.max(amountOfUnfilteredWine- getAllReservedResources().unfilteredWine,0), commands.unfilteredWine));
+
+        commands.from.tell(loanedResources);
+        reservedResources.put(commands.from, loanedResources);
+        getContext().getLog().info("Received Filtered Wine Transfer Request: {}", commands);
         return this;
     }
     public Behavior<Production.Commands> onUnfilteredWineTransferAcknowledgement(UnfilteredWineTransferAcknowledgement commands ){
-        amountOfUnfilteredWine -= commands.unfilteredWine;
-        getContext().getLog().info("Received Unfiltered Wine Transfer Acknowledgmenet: {}", commands);
+        amountOfUnfilteredWine -= reservedResources.get(commands.from).unfilteredWine;
+        reservedResources.put(commands.from, new UnfilteredWineTransferResponse(commands.from,0));
+
+        getContext().getLog().info("Received Filtered Wine Transfer Acknowledgmenet: {}", commands);
         return this;
     }
 
@@ -192,6 +214,7 @@ public class Fermentation extends AbstractBehavior<Production.Commands> {
         //onReportState();
         commands.from.tell(new WinePress.GrapeJuiceTransferAcknowledgement(getContext().getSelf(), commands.grapeJuice));
         amountOfGrapeJuice+= commands.grapeJuice;
+        onReportState();
 
         return this;
 

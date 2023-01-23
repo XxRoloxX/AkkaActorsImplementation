@@ -20,7 +20,7 @@ public class Warehouse extends AbstractBehavior<Production.Commands> {
 
     //public interface WarehouseCommands extends Production.Commands {};
 
-    private HashMap<ActorRef<Production.Commands>,ResourcesTransferRequest> reservedResources;
+    private HashMap<ActorRef<Production.Commands>,ResourcesTransferResponse> reservedResources;
 
     private Warehouse(ActorContext<Production.Commands> context) {
         super(context);
@@ -52,7 +52,7 @@ public class Warehouse extends AbstractBehavior<Production.Commands> {
 
 
     private Behavior<Production.Commands>onReportState(){
-        System.out.println("Resources: ");
+        System.out.println("Warehouse Resources: ");
         System.out.println("Grapes: "+amountOfGrapes);
         System.out.println("Water: "+amountOfWater);
         System.out.println("Sugar: "+amountOfSugar);
@@ -62,52 +62,56 @@ public class Warehouse extends AbstractBehavior<Production.Commands> {
     }
 
     private Behavior<Production.Commands> onResourceTransferAcknowledgement(ResourceTransferAcknowledgement commands){
-        amountOfGrapes -= Math.min(commands.grapes, amountOfGrapes);
-        amountOfWater -= Math.min(commands.water, amountOfWater);
-        amountOfSugar -=Math.min(commands.sugar, amountOfSugar);
-        amountOfBottles -= Math.min(commands.bottles, amountOfBottles);
+        amountOfGrapes -= commands.grapes;
+        amountOfWater -= commands.water;
+        amountOfSugar -=commands.sugar;
+        amountOfBottles -= commands.bottles;
+        reservedResources.put(commands.from,new ResourcesTransferResponse(commands.from,0,0,0,0));
         getContext().getLog().info("Received Resource Transfer Acknowledgement: {}", commands);
-        //onReportState();
+        onReportState();
         return this;
     }
 
-    private ResourcesTransferRequest getAllReservedResources(){
+    private ResourcesTransferResponse getAllReservedResources(){
         //ResourcesTransferRequest result = new ResourcesTransferRequest(getContext().getSelf(),0,0,0,0);
         ResourcesTransferRequest element;
         double grapes=0;
         double sugar=0;
         double water=0;
-        double bottles=0;
+        int bottles=0;
 
         Set<ActorRef<Production.Commands>> keys= reservedResources.keySet();
         for(ActorRef<Production.Commands> key: keys){
             element = reservedResources.get(key);
-            result.grapes += element.grapes;;
+            grapes += element.grapes;
+            sugar += element.sugar;
+            water +=element.water;
+            bottles +=element.bottles;
 
         }
+        return new ResourcesTransferResponse(getContext().getSelf(),grapes,water,sugar,bottles);
     }
 
 
 
     private Behavior<Production.Commands> onResourceTransferRequest(ResourcesTransferRequest commands){
 
-        commands.from.tell(new ResourcesTransferResponse(getContext().getSelf(),
-                Math.min(commands.grapes, amountOfGrapes),
-                Math.min(commands.water, amountOfWater),
-                Math.min(commands.sugar, amountOfSugar),
-                Math.min(commands.bottles, amountOfBottles)));
+        reservedResources.put(commands.from,new ResourcesTransferResponse(commands.from, 0,0,0,0));
+        ResourcesTransferRequest reserved = getAllReservedResources();
+        onReportState();
+        ResourcesTransferResponse loanedResources = new ResourcesTransferResponse(getContext().getSelf(),
+                Math.min(commands.grapes, Math.max(amountOfGrapes-reserved.grapes,0)),
+                Math.min(commands.water, Math.max(amountOfWater-reserved.water,0)),
+                Math.min(commands.sugar, Math.max(amountOfSugar-reserved.sugar,0)),
+                Math.min(commands.bottles, Math.max(amountOfBottles-reserved.bottles,0)));
 
-        reservedResources.put(commands.from,(new ResourcesTransferResponse(getContext().getSelf(),
-                Math.min(commands.grapes, amountOfGrapes),
-                Math.min(commands.water, amountOfWater),
-                Math.min(commands.sugar, amountOfSugar),
-                Math.min(commands.bottles, amountOfBottles))));
+        commands.from.tell(loanedResources);
+
+        reservedResources.put(commands.from,(loanedResources));
 
         getContext().getLog().info("Received Resource Transfer Request: {}", commands);
 
         //onReportState();
-
-
         return this;
 
     }

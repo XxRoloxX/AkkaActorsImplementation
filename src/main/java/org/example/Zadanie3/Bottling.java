@@ -9,7 +9,9 @@ import akka.actor.typed.javadsl.Receive;
 import org.example.Utils;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Random;
+import java.util.Set;
 
 public class Bottling extends AbstractBehavior<Production.Commands> {
     private static final double REQUIRED_FILTERED_WINE=0.75;
@@ -28,6 +30,7 @@ public class Bottling extends AbstractBehavior<Production.Commands> {
         amountOfFilteredWine=0;
         amountOfBottles=0;
         this.timeModifier=timeModifier;
+        reservedResources = new HashMap<>();
 
     }
 
@@ -39,12 +42,13 @@ public class Bottling extends AbstractBehavior<Production.Commands> {
 
     private double timeModifier;
 
+    private HashMap<ActorRef<Production.Commands>,WineTransferResponse> reservedResources;
+
     private ArrayList<ActorRef<Production.Commands>> warehouses;
     private ArrayList<ActorRef<Production.Commands>>filtrationStations;
     public boolean isOccupied() {
         return occupied;
     }
-
 
     public static Behavior<Production.Commands> create(double timeModifierArg){
         return Behaviors.setup(context-> new Bottling(context,timeModifierArg));
@@ -89,7 +93,7 @@ public class Bottling extends AbstractBehavior<Production.Commands> {
     }
 
     private Behavior<Production.Commands>onReportState(){
-        System.out.println("Resources: ");
+        System.out.println("Bottling Station Resources: ");
         System.out.println("Filtered Wine: "+amountOfFilteredWine);
         System.out.println("Wine: "+amountOfWine);
         System.out.println("Bottles: "+amountOfBottles);
@@ -107,6 +111,7 @@ public class Bottling extends AbstractBehavior<Production.Commands> {
         amountOfFilteredWine+= commands.filteredWine;
         commands.from.tell(new Filtration.FilteredWineTransferAcknowledgement(getContext().getSelf(), commands.filteredWine));
         getContext().getLog().info("Received Filtered Wine Response: {}", commands);
+        onReportState();
 
         return this;
     }
@@ -141,14 +146,37 @@ public class Bottling extends AbstractBehavior<Production.Commands> {
         filtrationStations= commands.filtrationStations;
         return this;
     }
+    private WineTransferResponse getAllReservedResources(){
+        //ResourcesTransferRequest result = new ResourcesTransferRequest(getContext().getSelf(),0,0,0,0);
+        WineTransferResponse element;
+        double wine =0;
+
+        Set<ActorRef<Production.Commands>> keys= reservedResources.keySet();
+        for(ActorRef<Production.Commands> key: keys){
+            element = reservedResources.get(key);
+            wine += element.wine;
+        }
+
+        return new WineTransferResponse(getContext().getSelf(),wine);
+    }
 
     private Behavior<Production.Commands>onWineTransferRequest(WineTransferRequest commands){
-        commands.from.tell(new WineTransferResponse(getContext().getSelf(),Math.min(amountOfWine,commands.wine)));
+       // commands.from.tell(new WineTransferResponse(getContext().getSelf(),Math.min(amountOfWine,commands.wine)));
+        reservedResources.put(commands.from, new WineTransferResponse(commands.from,0));
+
+        WineTransferResponse loanedResources = new WineTransferResponse(
+                getContext().getSelf(), Math.min(Math.max(amountOfWine- getAllReservedResources().wine,0), commands.wine));
+
+
+        commands.from.tell(loanedResources);
+        reservedResources.put(commands.from,loanedResources);
         getContext().getLog().info("Received Bottle Transfer Response: {}", commands);
         return this;
     }
     private Behavior<Production.Commands>onWineTransferAcknowledgement(WineTransferRequest commands){
-        amountOfWine-= commands.wine;
+        //amountOfWine-= commands.wine;
+        amountOfWine -= reservedResources.get(commands.from).wine;
+        reservedResources.put(commands.from, new WineTransferResponse(commands.from,0));
         getContext().getLog().info("Received Bottle Transfer Response: {}", commands);
         return this;
     }

@@ -10,7 +10,9 @@ import akka.actor.typed.javadsl.Receive;
 import org.example.Utils;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Random;
+import java.util.Set;
 
 public class Filtration extends AbstractBehavior<Production.Commands> {
     private static final double REQUIRED_UNFILTERED_WINE=25;
@@ -30,12 +32,15 @@ public class Filtration extends AbstractBehavior<Production.Commands> {
 
     private boolean occupied;
     private double timeModifier;
+
+    private HashMap<ActorRef<Production.Commands>,FilteredWineTransferResponse> reservedResources;
     private Filtration(ActorContext<Production.Commands> context, double timeModifier) {
         super(context);
         amountOfFilteredWine=0;
         amountOfUnfilteredWine=0;
         occupied=false;
         this.timeModifier=timeModifier;
+        reservedResources = new HashMap<>();
 
     }
 
@@ -90,6 +95,19 @@ public class Filtration extends AbstractBehavior<Production.Commands> {
         return this;
 
     }
+    private FilteredWineTransferResponse getAllReservedResources(){
+        //ResourcesTransferRequest result = new ResourcesTransferRequest(getContext().getSelf(),0,0,0,0);
+        FilteredWineTransferResponse element;
+        double filteredWine =0;
+
+        Set<ActorRef<Production.Commands>> keys= reservedResources.keySet();
+        for(ActorRef<Production.Commands> key: keys){
+            element = reservedResources.get(key);
+            filteredWine += element.filteredWine;
+        }
+
+        return new FilteredWineTransferResponse(getContext().getSelf(),filteredWine);
+    }
 
     private Behavior<Production.Commands> onUnfilteredWineTransferResponse(Fermentation.UnfilteredWineTransferResponse commands){
         amountOfUnfilteredWine+=commands.unfilteredWine;
@@ -98,13 +116,23 @@ public class Filtration extends AbstractBehavior<Production.Commands> {
         return this;
     }
     private Behavior<Production.Commands> onFilteredWineTransferRequest(FilteredWineTransferRequest commands){
-        commands.from.tell(new FilteredWineTransferResponse(commands.from, Math.min(commands.filteredWine,amountOfFilteredWine)));
+
+        reservedResources.put(commands.from, new FilteredWineTransferResponse(commands.from,0));
+
+        FilteredWineTransferResponse loanedResources = new FilteredWineTransferResponse(
+                getContext().getSelf(), Math.min(Math.max(amountOfFilteredWine- getAllReservedResources().filteredWine,0), commands.filteredWine));
+
+
+        commands.from.tell(loanedResources);
+        reservedResources.put(commands.from,loanedResources);
         getContext().getLog().info("Received Filtered Wine Transfer Request: {}", commands);
         return this;
 
     }
     private Behavior<Production.Commands>onFilteredWineTransferAcknowledgement(FilteredWineTransferAcknowledgement commands){
-        amountOfFilteredWine-= commands.filteredWine;
+
+        amountOfFilteredWine -= reservedResources.get(commands.from).filteredWine;
+        reservedResources.put(commands.from, new FilteredWineTransferResponse(commands.from,0));
         getContext().getLog().info("Received Filtered Wine Transfer Acknowledgement: {}", commands);
         return this;
     }
@@ -121,7 +149,7 @@ public class Filtration extends AbstractBehavior<Production.Commands> {
             if(rand.nextDouble()>FAILURE_PROPABILITY){
                 amountOfFilteredWine+=FILTERED_WINE_OUTPUT;
             }
-            onReportState();
+            //onReportState();
             occupied=false;
 
             return true;
@@ -154,11 +182,12 @@ public class Filtration extends AbstractBehavior<Production.Commands> {
 
     private Behavior<Production.Commands>onInitializeProduction(Production.InitializeProduction commands){
         fermentationStations= commands.fermentationStations;
+        bottlingStations = commands.bottlingStations;
         return this;
     }
 
     private Behavior<Production.Commands>onReportState(){
-        System.out.println("Resources: ");
+        System.out.println("Filtration Station Resources: ");
         System.out.println("Filtered Wine: "+amountOfFilteredWine);
         System.out.println("Unfiltered Wine: "+amountOfUnfilteredWine);
 

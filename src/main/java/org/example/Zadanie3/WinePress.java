@@ -7,9 +7,8 @@ import akka.actor.typed.javadsl.ActorContext;
 import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.Random;
+import java.util.*;
+
 import org.example.Utils;
 
 public class WinePress extends AbstractBehavior<Production.Commands> {
@@ -26,6 +25,7 @@ public class WinePress extends AbstractBehavior<Production.Commands> {
         amountOfGrapes=0;
         occupied=false;
         this.timeModifier=timeModifier;
+        reservedResources = new HashMap<>();
 
     }
 
@@ -36,6 +36,8 @@ public class WinePress extends AbstractBehavior<Production.Commands> {
     private boolean occupied;
 
     private double timeModifier;
+
+    private HashMap<ActorRef<Production.Commands>,GrapeJuiceTransferResponse> reservedResources;
 
     private ArrayList<ActorRef<Production.Commands>> warehouses;
     private ArrayList<ActorRef<Production.Commands>>fermentationStations;
@@ -85,7 +87,7 @@ public class WinePress extends AbstractBehavior<Production.Commands> {
     }
 
     private Behavior<Production.Commands>onReportState(){
-        System.out.println("Resources: ");
+        System.out.println("Wine Press Resources: ");
         System.out.println("Grapes: "+amountOfGrapes);
         System.out.println("Grape Juice: "+amountOfGrapeJuice);
         return this;
@@ -111,21 +113,41 @@ public class WinePress extends AbstractBehavior<Production.Commands> {
             return this;
     }
 
+    private GrapeJuiceTransferResponse getAllReservedResources(){
+        //ResourcesTransferRequest result = new ResourcesTransferRequest(getContext().getSelf(),0,0,0,0);
+        GrapeJuiceTransferRequest element;
+        double grapeJuice=0;
+
+
+        Set<ActorRef<Production.Commands>> keys= reservedResources.keySet();
+        for(ActorRef<Production.Commands> key: keys){
+            element = reservedResources.get(key);
+            grapeJuice+= element.grapeJuice;
+
+        }
+        return new GrapeJuiceTransferResponse(getContext().getSelf(),grapeJuice);
+    }
+
 
 
     private Behavior<Production.Commands> onGrapeJuiceTransportRequest(GrapeJuiceTransferRequest commands){
-        //onReportState();
+        onReportState();
         getContext().getLog().info("Received Grape Juice Transfer Request: {}", commands);
+        reservedResources.put(commands.from, new GrapeJuiceTransferResponse(commands.from, 0));
 
-        commands.from.tell(new GrapeJuiceTransferResponse(getContext().getSelf(),
-                Math.min(commands.grapeJuice, amountOfGrapeJuice)));
+        GrapeJuiceTransferResponse loanedResources = new GrapeJuiceTransferResponse(getContext().getSelf(),
+                Math.min(commands.grapeJuice, Math.max(amountOfGrapeJuice-getAllReservedResources().grapeJuice,0)));
+
+        commands.from.tell(loanedResources);
+        reservedResources.put(commands.from,loanedResources);
+
 
         return this;
 
     }
 
     private Behavior<Production.Commands> onGrapeTransportResponse(Warehouse.ResourcesTransferResponse commands){
-        //onReportState();
+        onReportState();
         getContext().getLog().info("Received Grape Juice Transfer Response: {}", commands);
 
         commands.from.tell(new Warehouse.ResourceTransferAcknowledgement(getContext().getSelf(), commands.grapes, commands.water, commands.sugar, commands.bottles));
@@ -136,7 +158,8 @@ public class WinePress extends AbstractBehavior<Production.Commands> {
     private Behavior<Production.Commands> onGrapeJuiceTransferAcknowledgement(GrapeJuiceTransferAcknowledgement commands){
 
         getContext().getLog().info("Received Grape Juice Transfer Acknowledgment: {}", commands);
-        amountOfGrapeJuice -= commands.grapeJuice;
+        amountOfGrapeJuice -= reservedResources.get(commands.from).grapeJuice;
+        reservedResources.put(commands.from, new GrapeJuiceTransferResponse(commands.from, 0));
         return this;
 
     }

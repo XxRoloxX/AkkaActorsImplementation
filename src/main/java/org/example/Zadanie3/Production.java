@@ -16,7 +16,7 @@ public class Production extends AbstractBehavior<Production.Commands>  {
 
 
     private final int NUMBER_OF_WAREHOUSES=1;
-    private final int NUMBER_OF_WINEPRESSES=5;
+    private final int NUMBER_OF_WINEPRESSES=1;
 
     private final int NUMBER_OF_FERMENTATION_STATIONS=3;
 
@@ -129,7 +129,7 @@ public class Production extends AbstractBehavior<Production.Commands>  {
 
         }
         for(int i=0;i<NUMBER_OF_BOTTLING_STATIONS;i++){
-            bottlingStations.add(getContext().spawn(Filtration.create(productionParameters.timeModifier), "Bottling"+i));
+            bottlingStations.add(getContext().spawn(Bottling.create(productionParameters.timeModifier), "Bottling"+i));
             bottlingStations.get(i).tell(new InitializeProduction(warehouses,winePresses,fermentationStations,filtrationStations,bottlingStations));
             bottlingStations.get(i).tell(triggerProduction.INSTANCE);
 
