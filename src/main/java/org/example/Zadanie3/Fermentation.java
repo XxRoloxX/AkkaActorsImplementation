@@ -5,6 +5,7 @@ import akka.actor.typed.javadsl.AbstractBehavior;
 import akka.actor.typed.javadsl.ActorContext;
 import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
+import org.example.Utils;
 
 import java.util.Date;
 import java.util.Random;
@@ -95,11 +96,8 @@ public class Fermentation extends AbstractBehavior<Production.Commands> {
                amountOfWater>=REQUIRED_WATER && !occupied){
             occupied=true;
 
-            try{
-                Thread.sleep((long) (TIME_TO_PRODUCE*1000*timeModifier));
-            }catch(InterruptedException e){
-                System.out.println(e);
-            }
+            Utils.waitFor((int)(TIME_TO_PRODUCE*1000*timeModifier));
+
             occupied=false;
             amountOfWater-=REQUIRED_WATER;
             amountOfSugar-=REQUIRED_SUGAR;
@@ -110,7 +108,7 @@ public class Fermentation extends AbstractBehavior<Production.Commands> {
             if(rand.nextDouble()>FAILURE_PROPABILITY){
                 amountOfUnfilteredWine+=UNFILTERED_WINE_OUTPUT;
             }
-            onReportState();
+            //onReportState();
             occupied=false;
 
             return true;
@@ -147,6 +145,7 @@ public class Fermentation extends AbstractBehavior<Production.Commands> {
         amountOfGrapes -= Math.min(commands.grapeJuice, amountOfGrapeJuice);
         */
         //onReportState();
+        commands.from.tell(new WinePress.GrapeJuiceTransferAcknowledgement(getContext().getSelf(), commands.grapeJuice));
         amountOfGrapeJuice+= commands.grapeJuice;
 
         return this;
@@ -159,6 +158,7 @@ public class Fermentation extends AbstractBehavior<Production.Commands> {
                 Math.min(commands.grapeJuice, amountOfGrapeJuice)));
         amountOfGrapes -= Math.min(commands.grapeJuice, amountOfGrapeJuice);
         */
+        commands.from.tell(new Warehouse.ResourceTransferAcknowledgement(getContext().getSelf(), commands.grapes,commands.water,commands.sugar,commands.bottles));
         amountOfSugar+= commands.sugar;
         amountOfWater+= commands.water;
 

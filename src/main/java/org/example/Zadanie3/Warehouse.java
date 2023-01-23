@@ -37,6 +37,7 @@ public class Warehouse extends AbstractBehavior<Production.Commands> {
     public Receive<Production.Commands> createReceive() {
         return newReceiveBuilder()
                 .onMessageEquals(ReportState.INSTANCE, this::onReportState)
+                .onMessage(ResourceTransferAcknowledgement.class,this::onResourceTransferAcknowledgement)
                 .onMessage(ResourcesTransferRequest.class,this::onResourceTransferRequest)
                 .build();
     }
@@ -54,6 +55,15 @@ public class Warehouse extends AbstractBehavior<Production.Commands> {
 
     }
 
+    private Behavior<Production.Commands> onResourceTransferAcknowledgement(ResourceTransferAcknowledgement commands){
+        amountOfGrapes -= Math.min(commands.grapes, amountOfGrapes);
+        amountOfWater -= Math.min(commands.water, amountOfWater);
+        amountOfSugar -=Math.min(commands.sugar, amountOfSugar);
+        amountOfBottles -= Math.min(commands.bottles, amountOfBottles);
+        onReportState();
+        return this;
+    }
+
 
 
     private Behavior<Production.Commands> onResourceTransferRequest(ResourcesTransferRequest commands){
@@ -63,11 +73,6 @@ public class Warehouse extends AbstractBehavior<Production.Commands> {
                 Math.min(commands.water, amountOfWater),
                 Math.min(commands.sugar, amountOfSugar),
                 Math.min(commands.bottles, amountOfBottles)));
-
-        amountOfGrapes -= Math.min(commands.grapes, amountOfGrapes);
-        amountOfWater -= Math.min(commands.water, amountOfWater);
-        amountOfSugar -=Math.min(commands.sugar, amountOfSugar);
-        amountOfBottles -= Math.min(commands.bottles, amountOfBottles);
         //onReportState();
 
 
@@ -96,24 +101,17 @@ public class Warehouse extends AbstractBehavior<Production.Commands> {
 
 
     }
-    public static class ResourcesTransferResponse implements  Production.Commands {
-        public final double grapes;
-        public final double water;
-        public final double sugar;
-        public final int bottles;
-
-        public final ActorRef<Production.Commands> from;
-
+    public static class ResourcesTransferResponse extends ResourcesTransferRequest {
 
         public ResourcesTransferResponse(ActorRef<Production.Commands> from, double grapes, double water, double sugar, int bottles){
-            this.grapes=grapes;
-            this.water = water;
-            this.sugar = sugar;
-            this.bottles=bottles;
-            this.from = from;
+            super(from, grapes,water,sugar,bottles);
         }
+    }
 
-
+    public static class ResourceTransferAcknowledgement extends ResourcesTransferRequest{
+        public ResourceTransferAcknowledgement(ActorRef<Production.Commands> from, double grapes, double water, double sugar, int bottles){
+            super(from, grapes,water,sugar,bottles);
+        }
     }
 
 }

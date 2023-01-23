@@ -9,6 +9,7 @@ import akka.actor.typed.javadsl.Receive;
 
 import java.util.Date;
 import java.util.Random;
+import org.example.Utils;
 
 public class WinePress extends AbstractBehavior<Production.Commands> {
 
@@ -54,9 +55,10 @@ public class WinePress extends AbstractBehavior<Production.Commands> {
     @Override
     public Receive<Production.Commands> createReceive() {
         return newReceiveBuilder()
-                .onMessage(Production.InitializeProduction.class,this::onInitializeProduction)
                 .onMessageEquals(ReportState.INSTANCE,this::onReportState)
                 .onMessageEquals(Production.triggerProduction.INSTANCE,this::onTriggerProduction)
+                .onMessage(GrapeJuiceTransferAcknowledgement.class,this::onGrapeJuiceTransferAcknowledgement)
+                .onMessage(Production.InitializeProduction.class,this::onInitializeProduction)
                 .onMessage(GrapeJuiceTransferRequest.class,this::onGrapeJuiceTransportRequest)
                 .onMessage(Warehouse.ResourcesTransferResponse.class,this::onGrapeTransportResponse)
                 .build();
@@ -67,11 +69,9 @@ public class WinePress extends AbstractBehavior<Production.Commands> {
         if(amountOfGrapes>=REQUIRED_GRAPES && !occupied){
             occupied=true;
 
-            try{
-                Thread.sleep((long) (TIME_TO_PRODUCE*1000*timeModifier));
-            }catch(InterruptedException e){
-                System.out.println(e);
-            }
+
+              Utils.waitFor((int)(TIME_TO_PRODUCE*1000*timeModifier));
+
             occupied=false;
             amountOfGrapes-=REQUIRED_GRAPES;
 
@@ -112,15 +112,20 @@ public class WinePress extends AbstractBehavior<Production.Commands> {
         //onReportState();
         commands.from.tell(new GrapeJuiceTransferResponse(getContext().getSelf(),
                 Math.min(commands.grapeJuice, amountOfGrapeJuice)));
-        amountOfGrapeJuice -= Math.min(commands.grapeJuice, amountOfGrapeJuice);
 
         return this;
 
     }
+
     private Behavior<Production.Commands> onGrapeTransportResponse(Warehouse.ResourcesTransferResponse commands){
         //onReportState();
+        commands.from.tell(new Warehouse.ResourceTransferAcknowledgement(getContext().getSelf(), commands.grapes, commands.water, commands.sugar, commands.bottles));
         amountOfGrapes += commands.grapes;
 
+        return this;
+    }
+    private Behavior<Production.Commands> onGrapeJuiceTransferAcknowledgement(GrapeJuiceTransferAcknowledgement commands){
+        amountOfGrapeJuice -= Math.min(commands.grapeJuice, amountOfGrapeJuice);
         return this;
 
     }
@@ -131,19 +136,7 @@ public class WinePress extends AbstractBehavior<Production.Commands> {
         return this;
     }
 
-    public static class GrapeJuiceTransferResponse implements Production.Commands{
-        public final double grapeJuice;
-        public final ActorRef<Production.Commands> from;
 
-
-        public GrapeJuiceTransferResponse(ActorRef<Production.Commands> from, double grapeJuice){
-            this.grapeJuice=grapeJuice;
-            this.from = from;
-
-        }
-
-
-    }
 
     public static class GrapeJuiceTransferRequest implements Production.Commands {
         public final double grapeJuice;
@@ -156,6 +149,20 @@ public class WinePress extends AbstractBehavior<Production.Commands> {
 
         }
 
+
+    }
+    public static class GrapeJuiceTransferResponse extends  GrapeJuiceTransferRequest{
+        public GrapeJuiceTransferResponse(ActorRef<Production.Commands> from, double grapeJuice){
+            super(from, grapeJuice);
+
+        }
+
+    }
+    public static class GrapeJuiceTransferAcknowledgement extends  GrapeJuiceTransferRequest{
+        public GrapeJuiceTransferAcknowledgement(ActorRef<Production.Commands> from, double grapeJuice){
+            super(from, grapeJuice);
+
+        }
 
     }
 
