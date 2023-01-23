@@ -6,7 +6,7 @@ public class Main {
     public static void main(String[] args){
 
         ActorSystem<Production.Commands> mySystem = ActorSystem.create(Production.create(),"mySystemm");
-        mySystem.tell(new Production.StartProduction(20,20,20,20,2));
+        mySystem.tell(new Production.StartProduction(1000,1000,1000,1000,0.01));
 
     }
 }

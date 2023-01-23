@@ -5,14 +5,12 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="2fa14aa4-8be3-463f-96f4-bc26f158ef64" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/example/Utils.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/example/Zadanie3/Fermentation.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/example/Zadanie3/Main.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/example/Zadanie3/Production.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/example/Zadanie3/WinePress.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/example/Zadanie3/Fermentation.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/example/Zadanie3/Fermentation.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/example/Zadanie3/Main.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/example/Zadanie3/Main.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/example/Zadanie3/Production.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/example/Zadanie3/Production.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/org/example/Zadanie3/Warehouse.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/example/Zadanie3/Warehouse.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/example/Zadanie3/WinePress.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/example/Zadanie3/WinePress.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -82,7 +80,7 @@
       <workItem from="1674242260402" duration="4420000" />
       <workItem from="1674250745265" duration="560000" />
       <workItem from="1674327822786" duration="9938000" />
-      <workItem from="1674406675772" duration="8334000" />
+      <workItem from="1674406675772" duration="13634000" />
     </task>
     <task id="LOCAL-00001" summary="Inital AbstractBehavior setup">
       <created>1674328724436</created>
@@ -91,7 +89,14 @@
       <option name="project" value="LOCAL" />
       <updated>1674328724436</updated>
     </task>
-    <option name="localTasksCounter" value="2" />
+    <task id="LOCAL-00002" summary="Before generalization under Production.Commands">
+      <created>1674415038836</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1674415038836</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -122,7 +127,8 @@
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="Inital AbstractBehavior setup" />
-    <option name="LAST_COMMIT_MESSAGE" value="Inital AbstractBehavior setup" />
+    <MESSAGE value="Before generalization under Production.Commands" />
+    <option name="LAST_COMMIT_MESSAGE" value="Before generalization under Production.Commands" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>

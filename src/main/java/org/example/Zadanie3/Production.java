@@ -9,9 +9,9 @@ import akka.actor.typed.javadsl.Receive;
 
 public class Production extends AbstractBehavior<Production.Commands> {
 
-    private ActorRef<Warehouse.WarehouseCommands>warehouse;
-    private ActorRef<WinePress.WinePressCommands>winePress;
-    private ActorRef<Fermentation.FermentationCommands>fermentation;
+    private ActorRef<Production.Commands>warehouse;
+    private ActorRef<Production.Commands>winePress;
+    private ActorRef<Production.Commands>fermentation;
 
     public interface Commands {};
 
@@ -23,15 +23,19 @@ public class Production extends AbstractBehavior<Production.Commands> {
         return Behaviors.setup(Production::new);
     }
 
+    public enum triggerProduction implements Commands{
+        INSTANCE
+    } ;
 
-    public static class InitializeProduction implements Commands, WinePress.WinePressCommands, Warehouse.WarehouseCommands, Fermentation.FermentationCommands {
 
-        public final ActorRef<Warehouse.WarehouseCommands>warehouse;
-        public final ActorRef<WinePress.WinePressCommands>winePress;
-        public final ActorRef<Fermentation.FermentationCommands>fermentation;
+    public static class InitializeProduction implements Commands {
 
-        public InitializeProduction(ActorRef<Warehouse.WarehouseCommands>warehouse
-        ,ActorRef<WinePress.WinePressCommands>winePress, ActorRef<Fermentation.FermentationCommands>fermentation){
+        public final ActorRef<Production.Commands>warehouse;
+        public final ActorRef<Production.Commands>winePress;
+        public final ActorRef<Production.Commands>fermentation;
+
+        public InitializeProduction(ActorRef<Production.Commands>warehouse
+        ,ActorRef<Production.Commands>winePress, ActorRef<Production.Commands>fermentation){
 
             this.warehouse= warehouse;
             this.winePress=winePress;
@@ -58,14 +62,24 @@ public class Production extends AbstractBehavior<Production.Commands> {
 
         }
     }
+
     private Behavior<Commands> onStartProduction(StartProduction productionParameters){
 
         warehouse = getContext().spawn(Warehouse.create(productionParameters.grapes,
                 productionParameters.water,productionParameters.sugar,productionParameters.bottles),"Warehouse");
 
-        winePress = getContext().spawn(WinePress.create(productionParameters.timeModifier), "Wine Press");
+        winePress = getContext().spawn(WinePress.create(productionParameters.timeModifier), "WinePress");
 
         fermentation = getContext().spawn(Fermentation.create(productionParameters.timeModifier), "Fermentation");
+
+        warehouse.tell(new InitializeProduction(warehouse,winePress,fermentation));
+        winePress.tell(new InitializeProduction(warehouse,winePress,fermentation));
+        fermentation.tell(new InitializeProduction(warehouse,winePress,fermentation));
+
+
+        warehouse.tell(triggerProduction.INSTANCE);
+        winePress.tell(triggerProduction.INSTANCE);
+        fermentation.tell(triggerProduction.INSTANCE);
 
 
         return this;

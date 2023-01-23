@@ -10,7 +10,7 @@ import akka.actor.typed.javadsl.Receive;
 import java.util.Date;
 import java.util.Random;
 
-public class WinePress extends AbstractBehavior<WinePress.WinePressCommands> {
+public class WinePress extends AbstractBehavior<Production.Commands> {
 
     private static final double REQUIRED_GRAPES=15;
     private static final double GRAPE_JUICE_OUTPUT=10;
@@ -18,7 +18,7 @@ public class WinePress extends AbstractBehavior<WinePress.WinePressCommands> {
     private static final double FAILURE_PROPABILITY = 0;
 
     private static final double TIME_TO_PRODUCE = 12;
-    private WinePress(ActorContext<WinePress.WinePressCommands> context, double timeModifier) {
+    private WinePress(ActorContext<Production.Commands> context, double timeModifier) {
         super(context);
         amountOfGrapeJuice=0;
         amountOfGrapes=0;
@@ -34,39 +34,41 @@ public class WinePress extends AbstractBehavior<WinePress.WinePressCommands> {
 
     private double timeModifier;
 
-    private ActorRef<Warehouse.WarehouseCommands>warehouse;
-    private ActorRef<Fermentation.FermentationCommands>fermentation;
+    private ActorRef<Production.Commands>warehouse;
+    private ActorRef<Production.Commands>fermentation;
     public boolean isOccupied() {
         return occupied;
     }
 
-    public interface WinePressCommands extends Production.Commands {};
+    //public interface WinePressCommands extends Production.Commands {};
 
-    public enum ReportState implements WinePressCommands {
+    public enum ReportState implements Production.Commands {
         INSTANCE;
     }
 
 
-    public static Behavior<WinePress.WinePressCommands> create(double timeModifierArg){
+    public static Behavior<Production.Commands> create(double timeModifierArg){
         return Behaviors.setup(context-> new WinePress(context,timeModifierArg));
     }
 
     @Override
-    public Receive<WinePress.WinePressCommands> createReceive() {
+    public Receive<Production.Commands> createReceive() {
         return newReceiveBuilder()
                 .onMessage(Production.InitializeProduction.class,this::onInitializeProduction)
                 .onMessageEquals(ReportState.INSTANCE,this::onReportState)
+                .onMessageEquals(Production.triggerProduction.INSTANCE,this::onTriggerProduction)
                 .onMessage(GrapeJuiceTransferRequest.class,this::onGrapeJuiceTransportRequest)
                 .onMessage(Warehouse.ResourcesTransferResponse.class,this::onGrapeTransportResponse)
                 .build();
     }
     public boolean produce(){
         Random rand = new Random();
+        //onReportState();
         if(amountOfGrapes>=REQUIRED_GRAPES && !occupied){
             occupied=true;
 
             try{
-                Thread.sleep((long) (TIME_TO_PRODUCE*3600*timeModifier));
+                Thread.sleep((long) (TIME_TO_PRODUCE*1000*timeModifier));
             }catch(InterruptedException e){
                 System.out.println(e);
             }
@@ -77,6 +79,8 @@ public class WinePress extends AbstractBehavior<WinePress.WinePressCommands> {
                 amountOfGrapeJuice+=GRAPE_JUICE_OUTPUT;
             }
 
+            occupied=false;
+
             return true;
 
         }else{
@@ -84,7 +88,7 @@ public class WinePress extends AbstractBehavior<WinePress.WinePressCommands> {
         }
     }
 
-    private Behavior<WinePress.WinePressCommands>onReportState(){
+    private Behavior<Production.Commands>onReportState(){
         System.out.println("Resources: ");
         System.out.println("Grapes: "+amountOfGrapes);
         System.out.println("Grape Juice: "+amountOfGrapeJuice);
@@ -92,45 +96,47 @@ public class WinePress extends AbstractBehavior<WinePress.WinePressCommands> {
 
     }
 
-    public void startProduction(){
-        while(true){
+    private Behavior<Production.Commands> onTriggerProduction(){
+
+            warehouse.tell(Production.triggerProduction.INSTANCE);
+            fermentation.tell(Production.triggerProduction.INSTANCE);
             if(!produce()){
-                warehouse.tell(new Warehouse.ResourcesTransferRequest(getContext().getSelf(), REQUIRED_GRAPES-amountOfGrapes,0,0,0))
+                warehouse.tell(new Warehouse.ResourcesTransferRequest(getContext().getSelf(), Math.max(REQUIRED_GRAPES-amountOfGrapes,0),0,0,0));
             }
-        }
+            return this;
     }
 
 
 
-    private Behavior<WinePress.WinePressCommands> onGrapeJuiceTransportRequest(GrapeJuiceTransferRequest commands){
-
+    private Behavior<Production.Commands> onGrapeJuiceTransportRequest(GrapeJuiceTransferRequest commands){
+        //onReportState();
         commands.from.tell(new GrapeJuiceTransferResponse(getContext().getSelf(),
                 Math.min(commands.grapeJuice, amountOfGrapeJuice)));
-        amountOfGrapes -= Math.min(commands.grapeJuice, amountOfGrapeJuice);
+        amountOfGrapeJuice -= Math.min(commands.grapeJuice, amountOfGrapeJuice);
 
         return this;
 
     }
-    private Behavior<WinePress.WinePressCommands> onGrapeTransportResponse(Warehouse.ResourcesTransferResponse commands){
-
-        amountOfGrapes += Math.min(commands.grapes, amountOfGrapes);
+    private Behavior<Production.Commands> onGrapeTransportResponse(Warehouse.ResourcesTransferResponse commands){
+        //onReportState();
+        amountOfGrapes += commands.grapes;
 
         return this;
 
     }
 
-    private Behavior<WinePress.WinePressCommands> onInitializeProduction(Production.InitializeProduction commands){
+    private Behavior<Production.Commands> onInitializeProduction(Production.InitializeProduction commands){
         warehouse= commands.warehouse;
         fermentation= commands.fermentation;
         return this;
     }
 
-    public static class GrapeJuiceTransferResponse implements WinePressCommands , Fermentation.FermentationCommands {
+    public static class GrapeJuiceTransferResponse implements Production.Commands{
         public final double grapeJuice;
-        public final ActorRef<WinePress.WinePressCommands> from;
+        public final ActorRef<Production.Commands> from;
 
 
-        public GrapeJuiceTransferResponse(ActorRef<WinePress.WinePressCommands> from, double grapeJuice){
+        public GrapeJuiceTransferResponse(ActorRef<Production.Commands> from, double grapeJuice){
             this.grapeJuice=grapeJuice;
             this.from = from;
 
@@ -139,12 +145,12 @@ public class WinePress extends AbstractBehavior<WinePress.WinePressCommands> {
 
     }
 
-    public static class GrapeJuiceTransferRequest implements WinePressCommands , Fermentation.FermentationCommands {
+    public static class GrapeJuiceTransferRequest implements Production.Commands {
         public final double grapeJuice;
-        public final ActorRef<Fermentation.FermentationCommands> from;
+        public final ActorRef<Production.Commands> from;
 
 
-        public GrapeJuiceTransferRequest(ActorRef<Fermentation.FermentationCommands> from, double grapeJuice){
+        public GrapeJuiceTransferRequest(ActorRef<Production.Commands> from, double grapeJuice){
             this.grapeJuice=grapeJuice;
             this.from = from;
 

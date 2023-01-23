@@ -7,18 +7,18 @@ import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
 import org.example.Utils;
 
-public class Warehouse extends AbstractBehavior<Warehouse.WarehouseCommands> {
+public class Warehouse extends AbstractBehavior<Production.Commands> {
     private double amountOfGrapes;
     private double amountOfWater;
     private double amountOfSugar;
     private int amountOfBottles;
 
-    public interface WarehouseCommands extends Production.Commands {};
+    //public interface WarehouseCommands extends Production.Commands {};
 
-    private Warehouse(ActorContext<WarehouseCommands> context) {
+    private Warehouse(ActorContext<Production.Commands> context) {
         super(context);
     }
-    private Warehouse(ActorContext<WarehouseCommands> context, double amountOfGrapes, double amountOfWater
+    private Warehouse(ActorContext<Production.Commands> context, double amountOfGrapes, double amountOfWater
     ,double amountOfSugar, int amountOfBottles) {
         super(context);
         this.amountOfGrapes = amountOfGrapes;
@@ -28,23 +28,23 @@ public class Warehouse extends AbstractBehavior<Warehouse.WarehouseCommands> {
 
     }
 
-    public static Behavior<WarehouseCommands> create(double amountOfGrapes, double amountOfWater
+    public static Behavior<Production.Commands> create(double amountOfGrapes, double amountOfWater
             ,double amountOfSugar, int amountOfBottles){
         return Behaviors.setup(context->new Warehouse(context,amountOfGrapes,amountOfWater,amountOfSugar,amountOfBottles));
     }
 
     @Override
-    public Receive<WarehouseCommands> createReceive() {
+    public Receive<Production.Commands> createReceive() {
         return newReceiveBuilder()
                 .onMessageEquals(ReportState.INSTANCE, this::onReportState)
                 .onMessage(ResourcesTransferRequest.class,this::onResourceTransferRequest)
                 .build();
     }
-    public enum ReportState implements WarehouseCommands {
+    public enum ReportState implements Production.Commands {
         INSTANCE
     }
 
-    private Behavior<WarehouseCommands>onReportState(){
+    private Behavior<Production.Commands>onReportState(){
         System.out.println("Resources: ");
         System.out.println("Grapes: "+amountOfGrapes);
         System.out.println("Water: "+amountOfWater);
@@ -56,7 +56,7 @@ public class Warehouse extends AbstractBehavior<Warehouse.WarehouseCommands> {
 
 
 
-    private Behavior<WarehouseCommands> onResourceTransferRequest(ResourcesTransferRequest commands){
+    private Behavior<Production.Commands> onResourceTransferRequest(ResourcesTransferRequest commands){
 
         commands.from.tell(new ResourcesTransferResponse(getContext().getSelf(),
                 Math.min(commands.grapes, amountOfGrapes),
@@ -68,13 +68,14 @@ public class Warehouse extends AbstractBehavior<Warehouse.WarehouseCommands> {
         amountOfWater -= Math.min(commands.water, amountOfWater);
         amountOfSugar -=Math.min(commands.sugar, amountOfSugar);
         amountOfBottles -= Math.min(commands.bottles, amountOfBottles);
+        //onReportState();
 
 
         return this;
 
     }
 
-    public static class ResourcesTransferRequest implements WarehouseCommands {
+    public static class ResourcesTransferRequest implements Production.Commands {
         public final double grapes;
         public final double water;
 
@@ -95,16 +96,16 @@ public class Warehouse extends AbstractBehavior<Warehouse.WarehouseCommands> {
 
 
     }
-    public static class ResourcesTransferResponse implements WinePress.WinePressCommands, WarehouseCommands, Fermentation.FermentationCommands {
+    public static class ResourcesTransferResponse implements  Production.Commands {
         public final double grapes;
         public final double water;
         public final double sugar;
         public final int bottles;
 
-        public final ActorRef<WarehouseCommands> from;
+        public final ActorRef<Production.Commands> from;
 
 
-        public ResourcesTransferResponse(ActorRef<WarehouseCommands> from, double grapes, double water, double sugar, int bottles){
+        public ResourcesTransferResponse(ActorRef<Production.Commands> from, double grapes, double water, double sugar, int bottles){
             this.grapes=grapes;
             this.water = water;
             this.sugar = sugar;
