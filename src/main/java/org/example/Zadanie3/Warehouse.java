@@ -18,6 +18,8 @@ public class Warehouse extends AbstractBehavior<Production.Commands> {
     private double amountOfSugar;
     private int amountOfBottles;
 
+    private double amountOfWine;
+
     //public interface WarehouseCommands extends Production.Commands {};
 
     private HashMap<ActorRef<Production.Commands>,ResourcesTransferResponse> reservedResources;
@@ -32,6 +34,8 @@ public class Warehouse extends AbstractBehavior<Production.Commands> {
         this.amountOfWater = amountOfWater;
         this.amountOfSugar = amountOfSugar;
         this.amountOfBottles = amountOfBottles;
+        this.amountOfWine=0;
+
         reservedResources = new HashMap<>();
 
     }
@@ -45,6 +49,7 @@ public class Warehouse extends AbstractBehavior<Production.Commands> {
     public Receive<Production.Commands> createReceive() {
         return newReceiveBuilder()
                 .onMessageEquals(Production.ReportState.INSTANCE, this::onReportState)
+                .onMessage(Bottling.WineTransferResponse.class, this::onWineTransferResponse)
                 .onMessage(ResourcesTransferRequest.class,this::onResourceTransferRequest)
                 .onMessage(ResourceTransferAcknowledgement.class,this::onResourceTransferAcknowledgement)
                 .build();
@@ -57,8 +62,17 @@ public class Warehouse extends AbstractBehavior<Production.Commands> {
         System.out.println("Water: "+amountOfWater);
         System.out.println("Sugar: "+amountOfSugar);
         System.out.println("Bottles: "+amountOfBottles);
+        System.out.println("Wine: "+amountOfWine);
         return this;
 
+    }
+
+    private Behavior<Production.Commands> onWineTransferResponse(Bottling.WineTransferResponse commands){
+
+        amountOfWine+=commands.wine;
+        getContext().getLog().info("Received Wine Transfer Response: {}", commands);
+
+        return this;
     }
 
     private Behavior<Production.Commands> onResourceTransferAcknowledgement(ResourceTransferAcknowledgement commands){

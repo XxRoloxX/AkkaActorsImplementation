@@ -233,7 +233,7 @@ public class Fermentation extends AbstractBehavior<Production.Commands> {
         //onReportState();
         commands.from.tell(new WinePress.GrapeJuiceTransferAcknowledgement(getContext().getSelf(), commands.grapeJuice));
         amountOfGrapeJuice+= commands.grapeJuice;
-        onReportState();
+        //onReportState();
 
         return this;
 

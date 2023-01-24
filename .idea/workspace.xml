@@ -9,6 +9,8 @@
       <change beforePath="$PROJECT_DIR$/src/main/java/org/example/Zadanie3/Bottling.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/example/Zadanie3/Bottling.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/org/example/Zadanie3/Fermentation.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/example/Zadanie3/Fermentation.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/org/example/Zadanie3/Filtration.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/example/Zadanie3/Filtration.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/example/Zadanie3/Main.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/example/Zadanie3/Main.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/example/Zadanie3/Production.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/example/Zadanie3/Production.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/org/example/Zadanie3/Warehouse.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/example/Zadanie3/Warehouse.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/org/example/Zadanie3/WinePress.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/example/Zadanie3/WinePress.java" afterDir="false" />
     </list>
@@ -85,7 +87,7 @@
       <workItem from="1674550324911" duration="2764000" />
       <workItem from="1674555793244" duration="2103000" />
       <workItem from="1674574262844" duration="768000" />
-      <workItem from="1674575044580" duration="3633000" />
+      <workItem from="1674575044580" duration="7811000" />
     </task>
     <task id="LOCAL-00001" summary="Inital AbstractBehavior setup">
       <created>1674328724436</created>
@@ -136,7 +138,14 @@
       <option name="project" value="LOCAL" />
       <updated>1674574295069</updated>
     </task>
-    <option name="localTasksCounter" value="8" />
+    <task id="LOCAL-00008" summary="Fixed multiplying">
+      <created>1674589972637</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1674589972637</updated>
+    </task>
+    <option name="localTasksCounter" value="9" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -173,7 +182,8 @@
     <MESSAGE value="Started reserved resources" />
     <MESSAGE value="Added TCP for MAMROT" />
     <MESSAGE value="Before unknowlegded" />
-    <option name="LAST_COMMIT_MESSAGE" value="Before unknowlegded" />
+    <MESSAGE value="Fixed multiplying" />
+    <option name="LAST_COMMIT_MESSAGE" value="Fixed multiplying" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>

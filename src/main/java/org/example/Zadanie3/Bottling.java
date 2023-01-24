@@ -68,7 +68,7 @@ public class Bottling extends AbstractBehavior<Production.Commands> {
     }
     public boolean produce(){
         Random rand = new Random();
-        onReportState();
+        //onReportState();
         //onReportState();
         if(amountOfFilteredWine>=REQUIRED_FILTERED_WINE && amountOfBottles>=REQUIRED_BOTTLES && !occupied){
             occupied=true;
@@ -105,14 +105,14 @@ public class Bottling extends AbstractBehavior<Production.Commands> {
         amountOfBottles+=commands.bottles;
         commands.from.tell(new Warehouse.ResourceTransferAcknowledgement(getContext().getSelf(),0,0,0, commands.bottles));
         getContext().getLog().info("Received Bottle Transfer Response: {}", commands);
-        onReportState();
+       // onReportState();
         return this;
     }
     private Behavior<Production.Commands>onFilteredWineTransferResponse(Filtration.FilteredWineTransferResponse commands){
         amountOfFilteredWine+= commands.filteredWine;
         commands.from.tell(new Filtration.FilteredWineTransferAcknowledgement(getContext().getSelf(), commands.filteredWine));
         getContext().getLog().info("Received Filtered Wine Response: {}", commands);
-        onReportState();
+       // onReportState();
 
         return this;
     }
@@ -134,6 +134,11 @@ public class Bottling extends AbstractBehavior<Production.Commands> {
             for(ActorRef<Production.Commands>filtration: filtrationStations){
                 filtration.tell(new Filtration.FilteredWineTransferRequest(getContext().getSelf(),Math.max(REQUIRED_FILTERED_WINE-amountOfFilteredWine,0)));
             }
+        }
+        onReportState();
+        for(ActorRef<Production.Commands> warehouse: warehouses){
+            warehouse.tell(new WineTransferResponse(getContext().getSelf(),amountOfWine));
+            amountOfWine=0;
         }
 
         return this;

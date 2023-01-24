@@ -144,7 +144,7 @@ public class WinePress extends AbstractBehavior<Production.Commands> {
         commands.from.tell(loanedResources);
         reservedResources.put(commands.from,loanedResources);
     */
-        onReportState();
+       // onReportState();
         getContext().getLog().info("Received Grape Juice Transfer Request: {}", commands);
         GrapeJuiceTransferResponse loanedResources = new GrapeJuiceTransferResponse(getContext().getSelf(),
                 Math.min(commands.grapeJuice, amountOfGrapeJuice));

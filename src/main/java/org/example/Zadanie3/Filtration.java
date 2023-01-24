@@ -81,7 +81,7 @@ public class Filtration extends AbstractBehavior<Production.Commands> {
         for(ActorRef<Production.Commands> bottling: bottlingStations){
             bottling.tell(Production.triggerProduction.INSTANCE);
         }
-        onReportState();
+       // onReportState();
 
         if(!produce()){
 
