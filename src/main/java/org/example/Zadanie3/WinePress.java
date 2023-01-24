@@ -100,6 +100,8 @@ public class WinePress extends AbstractBehavior<Production.Commands> {
             for(ActorRef<Production.Commands> warehouse: warehouses){
                 warehouse.tell(Production.triggerProduction.INSTANCE);
             }
+
+
             for(ActorRef<Production.Commands> fermentation: fermentationStations){
                 fermentation.tell(Production.triggerProduction.INSTANCE);
             }
@@ -131,6 +133,7 @@ public class WinePress extends AbstractBehavior<Production.Commands> {
 
 
     private Behavior<Production.Commands> onGrapeJuiceTransportRequest(GrapeJuiceTransferRequest commands){
+        /*
         onReportState();
         getContext().getLog().info("Received Grape Juice Transfer Request: {}", commands);
         reservedResources.put(commands.from, new GrapeJuiceTransferResponse(commands.from, 0));
@@ -140,6 +143,17 @@ public class WinePress extends AbstractBehavior<Production.Commands> {
 
         commands.from.tell(loanedResources);
         reservedResources.put(commands.from,loanedResources);
+    */
+        onReportState();
+        getContext().getLog().info("Received Grape Juice Transfer Request: {}", commands);
+        GrapeJuiceTransferResponse loanedResources = new GrapeJuiceTransferResponse(getContext().getSelf(),
+                Math.min(commands.grapeJuice, amountOfGrapeJuice));
+
+        if(loanedResources.grapeJuice>0){
+            amountOfGrapeJuice-= loanedResources.grapeJuice;
+            commands.from.tell(loanedResources);
+        }
+
 
 
         return this;
@@ -156,10 +170,15 @@ public class WinePress extends AbstractBehavior<Production.Commands> {
         return this;
     }
     private Behavior<Production.Commands> onGrapeJuiceTransferAcknowledgement(GrapeJuiceTransferAcknowledgement commands){
-
+        /*
         getContext().getLog().info("Received Grape Juice Transfer Acknowledgment: {}", commands);
         amountOfGrapeJuice -= reservedResources.get(commands.from).grapeJuice;
         reservedResources.put(commands.from, new GrapeJuiceTransferResponse(commands.from, 0));
+
+         */
+        getContext().getLog().info("Received Grape Juice Transfer Acknowledgment: {}", commands);
+
+
         return this;
 
     }

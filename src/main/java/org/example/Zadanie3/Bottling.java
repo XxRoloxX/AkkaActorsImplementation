@@ -18,9 +18,9 @@ public class Bottling extends AbstractBehavior<Production.Commands> {
 
     private static final double REQUIRED_BOTTLES=1;
 
-    private static final double WINE_OUTPUT=10;
+    private static final double WINE_OUTPUT=1;
 
-    private static final double FAILURE_PROBABILITY = 0.03;
+    private static final double FAILURE_PROBABILITY = 0.05;
 
     private static final double TIME_TO_PRODUCE = 12;
     private Bottling(ActorContext<Production.Commands> context, double timeModifier) {
@@ -68,6 +68,7 @@ public class Bottling extends AbstractBehavior<Production.Commands> {
     }
     public boolean produce(){
         Random rand = new Random();
+        onReportState();
         //onReportState();
         if(amountOfFilteredWine>=REQUIRED_FILTERED_WINE && amountOfBottles>=REQUIRED_BOTTLES && !occupied){
             occupied=true;
@@ -162,6 +163,7 @@ public class Bottling extends AbstractBehavior<Production.Commands> {
 
     private Behavior<Production.Commands>onWineTransferRequest(WineTransferRequest commands){
        // commands.from.tell(new WineTransferResponse(getContext().getSelf(),Math.min(amountOfWine,commands.wine)));
+        /*
         reservedResources.put(commands.from, new WineTransferResponse(commands.from,0));
 
         WineTransferResponse loanedResources = new WineTransferResponse(
@@ -170,13 +172,23 @@ public class Bottling extends AbstractBehavior<Production.Commands> {
 
         commands.from.tell(loanedResources);
         reservedResources.put(commands.from,loanedResources);
+
+         */
+        WineTransferResponse loanedResources = new WineTransferResponse(
+                getContext().getSelf(), Math.min(amountOfWine, commands.wine));
+
+        if(loanedResources.wine>0){
+            amountOfWine-= loanedResources.wine;
+            commands.from.tell(loanedResources);
+        }
+
         getContext().getLog().info("Received Bottle Transfer Response: {}", commands);
         return this;
     }
     private Behavior<Production.Commands>onWineTransferAcknowledgement(WineTransferRequest commands){
         //amountOfWine-= commands.wine;
-        amountOfWine -= reservedResources.get(commands.from).wine;
-        reservedResources.put(commands.from, new WineTransferResponse(commands.from,0));
+       // amountOfWine -= reservedResources.get(commands.from).wine;
+       // reservedResources.put(commands.from, new WineTransferResponse(commands.from,0));
         getContext().getLog().info("Received Bottle Transfer Response: {}", commands);
         return this;
     }

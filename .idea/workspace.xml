@@ -6,10 +6,11 @@
   <component name="ChangeListManager">
     <list default="true" id="2fa14aa4-8be3-463f-96f4-bc26f158ef64" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/example/Zadanie3/Bottling.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/example/Zadanie3/Bottling.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/org/example/Zadanie3/Fermentation.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/example/Zadanie3/Fermentation.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/org/example/Zadanie3/Filtration.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/example/Zadanie3/Filtration.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/example/Zadanie3/Production.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/example/Zadanie3/Production.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/org/example/Zadanie3/Warehouse.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/example/Zadanie3/Warehouse.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/example/Zadanie3/WinePress.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/example/Zadanie3/WinePress.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -83,6 +84,8 @@
       <workItem from="1674499565759" duration="19208000" />
       <workItem from="1674550324911" duration="2764000" />
       <workItem from="1674555793244" duration="2103000" />
+      <workItem from="1674574262844" duration="768000" />
+      <workItem from="1674575044580" duration="3633000" />
     </task>
     <task id="LOCAL-00001" summary="Inital AbstractBehavior setup">
       <created>1674328724436</created>
@@ -126,7 +129,14 @@
       <option name="project" value="LOCAL" />
       <updated>1674517726713</updated>
     </task>
-    <option name="localTasksCounter" value="7" />
+    <task id="LOCAL-00007" summary="Before unknowlegded">
+      <created>1674574295069</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1674574295069</updated>
+    </task>
+    <option name="localTasksCounter" value="8" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -162,7 +172,8 @@
     <MESSAGE value="Transfer Acknowledgement" />
     <MESSAGE value="Started reserved resources" />
     <MESSAGE value="Added TCP for MAMROT" />
-    <option name="LAST_COMMIT_MESSAGE" value="Added TCP for MAMROT" />
+    <MESSAGE value="Before unknowlegded" />
+    <option name="LAST_COMMIT_MESSAGE" value="Before unknowlegded" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>

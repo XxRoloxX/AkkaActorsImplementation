@@ -116,7 +116,7 @@ public class Filtration extends AbstractBehavior<Production.Commands> {
         return this;
     }
     private Behavior<Production.Commands> onFilteredWineTransferRequest(FilteredWineTransferRequest commands){
-
+        /*
         reservedResources.put(commands.from, new FilteredWineTransferResponse(commands.from,0));
 
         FilteredWineTransferResponse loanedResources = new FilteredWineTransferResponse(
@@ -126,13 +126,25 @@ public class Filtration extends AbstractBehavior<Production.Commands> {
         commands.from.tell(loanedResources);
         reservedResources.put(commands.from,loanedResources);
         getContext().getLog().info("Received Filtered Wine Transfer Request: {}", commands);
+
+         */
+
+        FilteredWineTransferResponse loanedResources = new FilteredWineTransferResponse(
+                getContext().getSelf(), Math.min(amountOfFilteredWine, commands.filteredWine));
+
+        if(loanedResources.filteredWine>0){
+            amountOfFilteredWine-= loanedResources.filteredWine;
+            commands.from.tell(loanedResources);
+        }
+
+        getContext().getLog().info("Received Filtered Wine Transfer Request: {}", commands);
         return this;
 
     }
     private Behavior<Production.Commands>onFilteredWineTransferAcknowledgement(FilteredWineTransferAcknowledgement commands){
 
-        amountOfFilteredWine -= reservedResources.get(commands.from).filteredWine;
-        reservedResources.put(commands.from, new FilteredWineTransferResponse(commands.from,0));
+        //amountOfFilteredWine -= reservedResources.get(commands.from).filteredWine;
+        //reservedResources.put(commands.from, new FilteredWineTransferResponse(commands.from,0));
         getContext().getLog().info("Received Filtered Wine Transfer Acknowledgement: {}", commands);
         return this;
     }
