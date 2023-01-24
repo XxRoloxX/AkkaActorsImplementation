@@ -191,6 +191,13 @@ public class Fermentation extends AbstractBehavior<Production.Commands> {
             this.unfilteredWine=unfilteredWine;
         }
 
+        @Override
+        public String toString() {
+            return "UnfilteredWineTransferRequest{" +
+                    "unfilteredWine=" + unfilteredWine +
+                    ", from=" + from +
+                    '}';
+        }
     }
     public static class UnfilteredWineTransferResponse extends UnfilteredWineTransferRequest{
         public UnfilteredWineTransferResponse(ActorRef<Production.Commands> from, double unfilteredWine){

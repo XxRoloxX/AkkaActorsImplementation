@@ -18,11 +18,11 @@ public class Production extends AbstractBehavior<Production.Commands>  {
     private final int NUMBER_OF_WAREHOUSES=1;
     private final int NUMBER_OF_WINEPRESSES=1;
 
-    private final int NUMBER_OF_FERMENTATION_STATIONS=3;
+    private final int NUMBER_OF_FERMENTATION_STATIONS=1;
 
-    private final int NUMBER_OF_FILTRATION_STATIONS=4;
+    private final int NUMBER_OF_FILTRATION_STATIONS=1;
 
-    private final int NUMBER_OF_BOTTLING_STATIONS=3;
+    private final int NUMBER_OF_BOTTLING_STATIONS=1;
 
 
 

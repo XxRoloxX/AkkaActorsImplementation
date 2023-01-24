@@ -167,6 +167,14 @@ public class Filtration extends AbstractBehavior<Production.Commands> {
             this.from =from;
             this.filteredWine=filteredWine;
         }
+
+        @Override
+        public String toString() {
+            return "FilteredWineTransferRequest{" +
+                    "from=" + from +
+                    ", filteredWine=" + filteredWine +
+                    '}';
+        }
     }
     public static class FilteredWineTransferResponse extends FilteredWineTransferRequest{
         public FilteredWineTransferResponse(ActorRef<Production.Commands> from, double filteredWine){

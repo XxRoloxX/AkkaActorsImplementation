@@ -45,8 +45,8 @@ public class Warehouse extends AbstractBehavior<Production.Commands> {
     public Receive<Production.Commands> createReceive() {
         return newReceiveBuilder()
                 .onMessageEquals(Production.ReportState.INSTANCE, this::onReportState)
-                .onMessage(ResourceTransferAcknowledgement.class,this::onResourceTransferAcknowledgement)
                 .onMessage(ResourcesTransferRequest.class,this::onResourceTransferRequest)
+                .onMessage(ResourceTransferAcknowledgement.class,this::onResourceTransferAcknowledgement)
                 .build();
     }
 
@@ -62,11 +62,15 @@ public class Warehouse extends AbstractBehavior<Production.Commands> {
     }
 
     private Behavior<Production.Commands> onResourceTransferAcknowledgement(ResourceTransferAcknowledgement commands){
-        amountOfGrapes -= commands.grapes;
-        amountOfWater -= commands.water;
-        amountOfSugar -=commands.sugar;
-        amountOfBottles -= commands.bottles;
-        reservedResources.put(commands.from,new ResourcesTransferResponse(commands.from,0,0,0,0));
+        amountOfGrapes -= Math.min(reservedResources.get(commands.from).grapes,commands.grapes);
+        amountOfWater -= Math.min(reservedResources.get(commands.from).water,commands.water);
+        amountOfSugar -=Math.min(reservedResources.get(commands.from).sugar,commands.sugar);
+        amountOfBottles -= Math.min(reservedResources.get(commands.from).bottles,commands.bottles);
+
+        ResourcesTransferResponse previouslyReserved = reservedResources.get(commands.from);
+        reservedResources.put(commands.from,new ResourcesTransferResponse(commands.from, Math.max(previouslyReserved.grapes-commands.grapes,0)
+                , Math.max(previouslyReserved.water-commands.water,0), Math.max(previouslyReserved.sugar-commands.sugar,0),
+                Math.max(previouslyReserved.bottles- commands.bottles,0)));
         getContext().getLog().info("Received Resource Transfer Acknowledgement: {}", commands);
         onReportState();
         return this;
@@ -83,12 +87,14 @@ public class Warehouse extends AbstractBehavior<Production.Commands> {
         Set<ActorRef<Production.Commands>> keys= reservedResources.keySet();
         for(ActorRef<Production.Commands> key: keys){
             element = reservedResources.get(key);
+            System.out.println("Found log "+element);
             grapes += element.grapes;
             sugar += element.sugar;
             water +=element.water;
             bottles +=element.bottles;
 
         }
+        System.out.println("Reserved grapes: "+grapes);
         return new ResourcesTransferResponse(getContext().getSelf(),grapes,water,sugar,bottles);
     }
 
@@ -107,7 +113,17 @@ public class Warehouse extends AbstractBehavior<Production.Commands> {
 
         commands.from.tell(loanedResources);
 
-        reservedResources.put(commands.from,(loanedResources));
+
+
+        if(reservedResources.containsKey(commands.from)){
+            ResourcesTransferResponse previouslyReserved = reservedResources.get(commands.from);
+            reservedResources.put(commands.from, new ResourcesTransferResponse(commands.from,
+                    loanedResources.grapes+previouslyReserved.grapes, loanedResources.water+ previouslyReserved.water,
+                    loanedResources.sugar+ previouslyReserved.sugar, loanedResources.bottles+previouslyReserved.bottles));
+        }else{
+            reservedResources.put(commands.from,(loanedResources));
+        }
+
 
         getContext().getLog().info("Received Resource Transfer Request: {}", commands);
 
@@ -152,11 +168,43 @@ public class Warehouse extends AbstractBehavior<Production.Commands> {
             super(from, grapes,water,sugar,bottles);
         }
     }
-
+/*
     public static class ResourceTransferAcknowledgement extends ResourcesTransferRequest{
         public ResourceTransferAcknowledgement(ActorRef<Production.Commands> from, double grapes, double water, double sugar, int bottles){
             super(from, grapes,water,sugar,bottles);
         }
     }
+*/
+public static class ResourceTransferAcknowledgement implements Production.Commands {
+    public final double grapes;
+    public final double water;
+
+    public final double sugar;
+
+    public final int bottles;
+
+    public final ActorRef<Production.Commands> from;
+
+
+    public ResourceTransferAcknowledgement(ActorRef<Production.Commands> from, double grapes, double water, double sugar, int bottles){
+        this.grapes=grapes;
+        this.water = water;
+        this.sugar = sugar;
+        this.bottles=bottles;
+        this.from = from;
+    }
+
+    @Override
+    public String toString() {
+        return "ResourcesTransferRequest{" +
+                "grapes=" + grapes +
+                ", water=" + water +
+                ", sugar=" + sugar +
+                ", bottles=" + bottles +
+                ", from=" + from +
+                '}';
+    }
+}
+
 
 }
