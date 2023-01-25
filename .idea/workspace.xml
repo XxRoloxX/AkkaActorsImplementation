@@ -6,13 +6,6 @@
   <component name="ChangeListManager">
     <list default="true" id="2fa14aa4-8be3-463f-96f4-bc26f158ef64" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/example/Zadanie3/Bottling.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/example/Zadanie3/Bottling.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/example/Zadanie3/Fermentation.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/example/Zadanie3/Fermentation.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/example/Zadanie3/Filtration.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/example/Zadanie3/Filtration.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/example/Zadanie3/Main.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/example/Zadanie3/Main.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/example/Zadanie3/Production.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/example/Zadanie3/Production.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/example/Zadanie3/Warehouse.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/example/Zadanie3/Warehouse.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/example/Zadanie3/WinePress.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/example/Zadanie3/WinePress.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -88,6 +81,7 @@
       <workItem from="1674555793244" duration="2103000" />
       <workItem from="1674574262844" duration="768000" />
       <workItem from="1674575044580" duration="7811000" />
+      <workItem from="1674597983455" duration="741000" />
     </task>
     <task id="LOCAL-00001" summary="Inital AbstractBehavior setup">
       <created>1674328724436</created>
@@ -145,7 +139,14 @@
       <option name="project" value="LOCAL" />
       <updated>1674589972637</updated>
     </task>
-    <option name="localTasksCounter" value="9" />
+    <task id="LOCAL-00009" summary="Fixed stackoverflow">
+      <created>1674598318511</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1674598318511</updated>
+    </task>
+    <option name="localTasksCounter" value="10" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -183,7 +184,8 @@
     <MESSAGE value="Added TCP for MAMROT" />
     <MESSAGE value="Before unknowlegded" />
     <MESSAGE value="Fixed multiplying" />
-    <option name="LAST_COMMIT_MESSAGE" value="Fixed multiplying" />
+    <MESSAGE value="Fixed stackoverflow" />
+    <option name="LAST_COMMIT_MESSAGE" value="Fixed stackoverflow" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
