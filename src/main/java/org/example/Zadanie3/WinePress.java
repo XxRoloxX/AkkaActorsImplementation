@@ -101,10 +101,13 @@ public class WinePress extends AbstractBehavior<Production.Commands> {
                 warehouse.tell(Production.triggerProduction.INSTANCE);
             }
 
-
-            for(ActorRef<Production.Commands> fermentation: fermentationStations){
-                fermentation.tell(Production.triggerProduction.INSTANCE);
+            if(amountOfGrapeJuice>0){
+                for(ActorRef<Production.Commands> fermentation: fermentationStations){
+                    fermentation.tell(Production.triggerProduction.INSTANCE);
+                }
             }
+
+
 
             if(!produce()){
                 for(ActorRef<Production.Commands> warehouse: warehouses){

@@ -4,7 +4,7 @@ import java.util.ArrayList;
 
 public class Main {
 
-    public static void weNeedToCookJessie(int accountsAmount, int timeToLive, int initialFunds){
+    public static void cooking(int accountsAmount, int timeToLive, int initialFunds){
         ArrayList<Account> accounts = new ArrayList<>();
         ArrayList<Cook> cooks = new ArrayList<>();
         Thread[] threads = new Thread[accountsAmount];
@@ -37,6 +37,6 @@ public class Main {
     }
 
     public static void main(String[] args){
-        weNeedToCookJessie(10,1000,1000);
+        cooking(10,1000,1000);
     }
 }
